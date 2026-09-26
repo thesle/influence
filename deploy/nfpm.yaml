@@ -1,0 +1,81 @@
+# nfpm packaging manifest for the Influence documentation platform.
+#
+# A single manifest produces both a .deb (Ubuntu 20.04+) and a .rpm (Fedora
+# 38+) — see Requirements 20.1, 20.2, 28.4. Build with nfpm (https://nfpm.goreleaser.com):
+#
+#   make build                                   # produce ./bin/influence first
+#   nfpm package --config deploy/nfpm.yaml --packager deb --target dist/
+#   nfpm package --config deploy/nfpm.yaml --packager rpm --target dist/
+#
+# The package lays down the binary, the systemd unit, and a default config,
+# then its maintainer scripts create the non-login `influence` user/group, own
+# /var/lib/influence, and enable the service. The config is registered as a
+# package config file so operator edits survive upgrades.
+
+name: influence
+arch: amd64
+platform: linux
+version: ${INFLUENCE_VERSION:-0.1.0}
+section: web
+priority: optional
+maintainer: Influence Maintainers <maintainers@influence.example>
+description: |
+  Influence documentation platform.
+  A standalone, multitenant documentation server backed by SQLite (with FTS5
+  full-text search) and served over optional TLS. Runs as a single static
+  binary managed by systemd.
+vendor: Influence
+homepage: https://github.com/influence/influence
+license: Proprietary
+
+# Files installed by the package. Paths mirror the Makefile install targets:
+#   binary  -> /usr/local/bin/influence
+#   unit    -> /etc/systemd/system/influence.service
+#   config  -> /etc/influence/config (config file: preserved on upgrade)
+contents:
+  - src: ./bin/influence
+    dst: /usr/local/bin/influence
+    file_info:
+      mode: 0755
+
+  - src: ./deploy/influence.service
+    dst: /etc/systemd/system/influence.service
+    file_info:
+      mode: 0644
+
+  - src: ./deploy/packaging/config.default
+    dst: /etc/influence/config
+    type: config|noreplace
+    file_info:
+      mode: 0644
+
+  # Ensure the config directory exists with sane permissions.
+  - dst: /etc/influence
+    type: dir
+    file_info:
+      mode: 0755
+
+# Maintainer scripts shared across deb and rpm. They create the service user,
+# own the data directory, and enable/disable the systemd unit.
+scripts:
+  preinstall: ./deploy/packaging/scripts/preinstall.sh
+  postinstall: ./deploy/packaging/scripts/postinstall.sh
+  preremove: ./deploy/packaging/scripts/preremove.sh
+  postremove: ./deploy/packaging/scripts/postremove.sh
+
+# Distro-specific overrides.
+overrides:
+  deb:
+    depends:
+      - adduser
+    # Ubuntu 20.04+ ships systemd; no extra runtime deps beyond adduser for the
+    # useradd/groupadd helpers used by the maintainer scripts.
+  rpm:
+    # Fedora 38+ ships systemd and shadow-utils (useradd/groupadd) by default.
+    depends:
+      - shadow-utils
+
+# rpm-specific metadata.
+rpm:
+  group: Applications/Internet
+  compression: xz

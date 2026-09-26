@@ -1,0 +1,25 @@
+# Default configuration for the Influence documentation platform.
+#
+# This file is installed to /etc/influence/config. It is marked as a
+# configuration file in both the .deb and .rpm packages, so operator edits are
+# preserved across package upgrades (dpkg conffiles / rpm %config(noreplace)).
+#
+# Settings follow `key = value`. Resolution precedence is:
+#   CLI flag > environment variable > this file > built-in default.
+
+# TCP port the server listens on (1-65535).
+port = 8080
+
+# Directory holding the Central_Directory and every Tenant_Database.
+# Must exist and be writable by the `influence` service user.
+data_dir = /var/lib/influence
+
+# TLS/SSL termination. When true, set tls_cert and tls_key to PEM paths.
+tls = false
+# tls_cert = /etc/influence/tls/cert.pem
+# tls_key  = /etc/influence/tls/key.pem
+
+# Server master secret used to derive per-tenant key-encryption keys.
+# Set this to a strong random value before running in production, either here
+# or via the INFLUENCE_MASTER_SECRET environment variable.
+# master_secret =

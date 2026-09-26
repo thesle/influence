@@ -1,0 +1,91 @@
+# deploy/influence.service
+#
+# systemd unit for the Influence documentation platform (Requirements 20.1,
+# 20.2, 28.4). The service runs the single static binary installed at
+# /usr/local/bin/influence as the dedicated non-login `influence` system user
+# (created by `make install`), reads its settings from /etc/influence/config,
+# and stores all data under /var/lib/influence.
+#
+# The hardening directives below sandbox the process: the root filesystem is
+# mounted read-only (ProtectSystem=strict) and /var/lib/influence is the only
+# writable location (ReadWritePaths). The binary needs no elevated privileges,
+# so privilege escalation and most kernel/host surfaces are locked down.
+#
+# Validate with: systemd-analyze verify deploy/influence.service
+
+[Unit]
+Description=Influence documentation platform
+Documentation=https://github.com/influence/influence
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# Run as the dedicated non-login service user/group created by `make install`.
+User=influence
+Group=influence
+
+# Read settings from the installed config file. The config supplies the listen
+# port, data_dir (/var/lib/influence), and TLS settings; keeping the invocation
+# config-driven means operator edits to /etc/influence/config take effect on a
+# restart without changing this unit (consistent with the Makefile install).
+ExecStart=/usr/local/bin/influence --config /etc/influence/config
+
+# Restart the service if it exits with a failure; back off briefly between
+# attempts so a fail-fast startup error does not busy-loop.
+Restart=on-failure
+RestartSec=5
+
+# --- Hardening ---------------------------------------------------------------
+# Deny privilege escalation for the service and any child it spawns.
+NoNewPrivileges=true
+
+# Mount the entire filesystem hierarchy read-only for the service, then punch
+# through only the data directory as writable. /var/lib/influence holds the
+# Central_Directory and every Tenant_Database.
+ProtectSystem=strict
+ReadWritePaths=/var/lib/influence
+
+# The service has no business touching user home directories.
+ProtectHome=true
+
+# Give the service a private /tmp and /var/tmp that are cleared on stop.
+PrivateTmp=true
+
+# Prevent the service from reading or writing sensitive kernel and host state.
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+ProcSubset=pid
+
+# Restrict the syscall and address-family surface to what an HTTP(S) server
+# needs. AF_UNIX is kept for local sockets; AF_INET/AF_INET6 for the listener.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+
+# Only allow a conservative set of syscall groups; block obscure/dangerous ones.
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+SystemCallArchitectures=native
+
+# Drop all Linux capabilities — the service binds a port >= 1024 by default and
+# needs none. (Operators binding a privileged port should override with a
+# drop-in adding CAP_NET_BIND_SERVICE.)
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# Basic resource guardrails.
+UMask=0077
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
