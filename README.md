@@ -1,0 +1,40 @@
+# Influence
+
+Influence is a self-hostable, multitenant documentation platform for non-profits.
+It is a single Go process that serves a SvelteKit web application, stores all data
+in SQLite, and secures transport with TLS.
+
+- **Spheres** group related material and are the unit of access control.
+- **Facets** subdivide a Sphere into a tree of topics.
+- **Polygons** are the documents themselves, authored in markdown.
+
+Sensitive passages inside a Polygon can be encrypted into obfuscation tokens and
+revealed only to users who hold reveal permission for the owning Sphere.
+
+## Building and running
+
+Influence runs as a single standalone process on a Linux host. The `Makefile`
+provides the common lifecycle targets:
+
+| Target      | What it does                                                      |
+| ----------- | ----------------------------------------------------------------- |
+| `dev`       | Runs the server in the foreground for local development.          |
+| `build`     | Produces a runnable server binary.                                |
+| `install`   | Installs the binary and a systemd service under a dedicated user. |
+| `uninstall` | Removes the installed binary and service.                         |
+
+## Documentation
+
+Platform documentation lives under [`docs/`](docs/README.md):
+
+- [Getting Started](docs/getting-started.md) — first run, logging in, creating content.
+- [Administration](docs/administration.md) — tenants, users, groups, and backups.
+
+## License
+
+Influence is free software licensed under the **GNU General Public License,
+version 3.0 only** (GPL-3.0-only). You may redistribute and/or modify it under
+the terms of that license. It is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the [LICENSE](LICENSE) file for the full
+text, or <https://www.gnu.org/licenses/gpl-3.0.html\>.

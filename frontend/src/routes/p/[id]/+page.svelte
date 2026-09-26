@@ -1,3 +1,20 @@
+<!--
+  Influence — a self-hostable documentation platform.
+  Copyright (C) 2026  Conrad Smith
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, version 3.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+
 <script lang="ts">
 	// Polygon-detail route (owned by task 23.2). Routes are built from Short-UUID
 	// Record_IDs (Req 15.2); this loads the Polygon for the id in the path and
